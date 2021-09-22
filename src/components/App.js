@@ -6,6 +6,8 @@ import DaiToken from '../abis/DaiToken.json';
 import DappToken from '../abis/DappToken.json';
 import TokenFarm from '../abis/TokenFarm.json';
 
+import Main from './Main';
+
 class App extends Component {
 
   loadWeb3 = async () => {
@@ -60,6 +62,22 @@ class App extends Component {
 
   }
 
+  stakeTokens = amount => {
+    this.setState({ loading: true });
+    this.state.daiToken.methods.approve(this.state.tokenFarm._address, amount).send({ from: this.state.account }).on('transactionHash', () => {
+      this.state.tokenFarm.methods.stakeTokens(amount).send({ from: this.state.account }).on('transactionHash', () => {
+        this.setState({ loading: false });
+      })
+    });
+  }
+
+  unstakeTokens = amount => {
+    this.setState({ loading: true });
+    this.state.tokenFarm.methods.unstakeTokens().send({ from: this.state.account }).on('transactionHash', () => {
+      this.setState({ loading: false });
+    })
+  }
+
   async componentWillMount () {
     await this.loadWeb3();
     await this.loadBlockchainData();
@@ -80,6 +98,16 @@ class App extends Component {
   }
 
   render() {
+
+    const content = this.state.loading ? <p id="loader" className="text-center">Loading...</p> 
+    : <Main 
+        daiTokenBalance={this.state.daiTokenBalance}
+        dappTokenBalance={this.state.dappTokenBalance}
+        stakingBalance={this.state.stakingBalance}
+        stakeTokens={this.stakeTokens}
+        unstakeTokens={this.unstakeTokens}
+    />;
+
     return (
       <div>
         <Navbar account={this.state.account} />
@@ -93,8 +121,7 @@ class App extends Component {
                   rel="noopener noreferrer"
                 >
                 </a>
-
-                <h1>Hello, World!</h1>
+                {content}
 
               </div>
             </main>
